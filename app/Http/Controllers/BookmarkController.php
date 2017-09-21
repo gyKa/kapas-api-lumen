@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookmarkController extends Controller
 {
@@ -12,13 +13,14 @@ class BookmarkController extends Controller
      */
     public function index()
     {
-        $bookmarks = app('db')->select(
-            'select * from bookmark'
-        );
+        $bookmarks = DB::table('bookmark')->get();
 
         foreach ($bookmarks as $bookmark) {
-            $tags = app('db')->select('select tag.id, tag.title from bookmark_tag inner join tag on bookmark_tag.tag_id = tag.id where bookmark_id = ?', [$bookmark->id]);
-            $bookmark->tags = $tags;
+            $bookmark->tags = DB::table('bookmark_tag')
+                ->join('tag', 'bookmark_tag.tag_id', '=', 'tag.id')
+                ->select('tag.id', 'tag.title')
+                ->where('bookmark_tag.bookmark_id', $bookmark->id)
+                ->get();
         }
 
         return response()->json($bookmarks);
@@ -33,33 +35,24 @@ class BookmarkController extends Controller
         $data = json_decode($request->getContent(), true);
 
         foreach ($data['tags'] as $tag) {
-            $tagId = app('db')->select('select id from tag where title = ?', [$tag]);
+            $tagId = DB::table('tag')->where('title', $tag)->value('id');
 
-            if (count($tagId) === 0) {
-                app('db')->insert(
-                    'insert into tag (title, created_at) values (?, ?)',
-                    [$tag, new \DateTime()]
+            if (is_null($tagId)) {
+                DB::table('tag')->insert(
+                    ['title' => $tag, 'created_at' => new \DateTime()]
                 );
             }
         }
 
-        $tags = "'" . join("','", $data['tags']) . "'";
+        $tags = DB::table('tag')->whereIn('title', $data['tags'])->get();
 
-        $tagIds = app('db')->select(
-            "select id from tag where title IN ($tags)"
+        $id = DB::table('bookmark')->insertGetId(
+            ['title' => $data['title'], 'url' => $data['url'], 'created_at' => new \DateTime()]
         );
 
-        app('db')->insert(
-            'insert into bookmark (title, url, created_at) values (?, ?, ?)',
-            [$data['title'], $data['url'], new \DateTime()]
-        );
-
-        $id = app('db')->select('SELECT LAST_INSERT_ID() as id');
-
-        foreach ($tagIds as $tagId) {
-            app('db')->insert(
-                'insert into bookmark_tag (bookmark_id, tag_id) values (?, ?)',
-                [$id[0]->id, $tagId->id]
+        foreach ($tags as $tag) {
+            DB::table('bookmark_tag')->insert(
+                ['bookmark_id' => $id, 'tag_id' => $tag->id]
             );
         }
 
@@ -72,10 +65,15 @@ class BookmarkController extends Controller
      */
     public function show(int $id)
     {
-        $bookmark = app('db')->select(
-            "SELECT * FROM bookmark WHERE id = ? LIMIT 1",
-            [$id]
-        );
+        $bookmark = DB::table('bookmark')->where('id', $id)->first();
+
+        $tags = DB::table('bookmark_tag')
+                    ->join('tag', 'bookmark_tag.tag_id', '=', 'tag.id')
+                    ->select('tag.id', 'tag.title')
+                    ->where('bookmark_tag.bookmark_id', $bookmark->id)
+                    ->get();
+
+        $bookmark->tags = $tags;
 
         return response()->json($bookmark);
     }
@@ -89,10 +87,9 @@ class BookmarkController extends Controller
     {
         $data = json_decode($request->getContent(), true);
 
-        app('db')->update(
-            'update bookmark (title, url, updated_at) values (?, ?, ?) where id = ?',
-            [$data['title'], $data['url'], new \DateTime(), $id]
-        );
+        DB::table('bookmark')
+            ->where('id', $id)
+            ->update(['title' => $data['title'], 'url' => $data['url'], 'updated_at' => new \DateTime()]);
 
         return response()->json([], 204);
     }
@@ -103,7 +100,7 @@ class BookmarkController extends Controller
      */
     public function destroy(int $id)
     {
-        app('db')->delete('delete from bookmark where id = ?', [$id]);
+        DB::table('bookmark')->where('id', '=', $id)->delete();
 
         return response()->json([], 204);
     }
