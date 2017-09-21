@@ -13,8 +13,13 @@ class BookmarkController extends Controller
     public function index()
     {
         $bookmarks = app('db')->select(
-            'select * from bookmark left join bookmark_tag ON bookmark.id = bookmark_tag.bookmark_id'
+            'select * from bookmark'
         );
+
+        foreach ($bookmarks as $bookmark) {
+            $tags = app('db')->select('select tag.id, tag.title from bookmark_tag inner join tag on bookmark_tag.tag_id = tag.id where bookmark_id = ?', [$bookmark->id]);
+            $bookmark->tags = $tags;
+        }
 
         return response()->json($bookmarks);
     }
