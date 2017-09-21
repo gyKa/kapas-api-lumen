@@ -12,7 +12,9 @@ class BookmarkController extends Controller
      */
     public function index()
     {
-        $bookmarks = app('db')->select("SELECT * FROM bookmark");
+        $bookmarks = app('db')->select(
+            'select * from bookmark left join bookmark_tag ON bookmark.id = bookmark_tag.bookmark_id'
+        );
 
         return response()->json($bookmarks);
     }
@@ -25,10 +27,36 @@ class BookmarkController extends Controller
     {
         $data = json_decode($request->getContent(), true);
 
+        foreach ($data['tags'] as $tag) {
+            $tagId = app('db')->select('select id from tag where title = ?', [$tag]);
+
+            if (count($tagId) === 0) {
+                app('db')->insert(
+                    'insert into tag (title, created_at) values (?, ?)',
+                    [$tag, new \DateTime()]
+                );
+            }
+        }
+
+        $tags = "'" . join("','", $data['tags']) . "'";
+
+        $tagIds = app('db')->select(
+            "select id from tag where title IN ($tags)"
+        );
+
         app('db')->insert(
             'insert into bookmark (title, url, created_at) values (?, ?, ?)',
             [$data['title'], $data['url'], new \DateTime()]
         );
+
+        $id = app('db')->select('SELECT LAST_INSERT_ID() as id');
+
+        foreach ($tagIds as $tagId) {
+            app('db')->insert(
+                'insert into bookmark_tag (bookmark_id, tag_id) values (?, ?)',
+                [$id[0]->id, $tagId->id]
+            );
+        }
 
         return response()->json([], 201);
     }
