@@ -58,7 +58,7 @@ class BookmarkController extends Controller
 
         app('db')->update(
             'update bookmark (title, url, updated_at) values (?, ?, ?) where id = ?',
-            [$id, $data['title'], $data['url'], new \DateTime()]
+            [$data['title'], $data['url'], new \DateTime(), $id]
         );
 
         return response()->json([], 204);
