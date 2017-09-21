@@ -17,3 +17,11 @@ $router->group(['prefix' => 'bookmark'], function () use ($router) {
     $router->put('/{id}', ['uses' => 'BookmarkController@update']);
     $router->delete('/{id}', ['uses' => 'BookmarkController@destroy']);
 });
+
+$router->group(['prefix' => 'tag'], function () use ($router) {
+    $router->get('/', ['uses' => 'TagController@index']);
+    $router->post('/', ['uses' => 'TagController@store']);
+    $router->get('/{id}', ['uses' => 'TagController@show']);
+    $router->put('/{id}', ['uses' => 'TagController@update']);
+    $router->delete('/{id}', ['uses' => 'TagController@destroy']);
+});
