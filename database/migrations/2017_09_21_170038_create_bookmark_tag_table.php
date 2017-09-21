@@ -20,8 +20,8 @@ class CreateBookmarkTagTable extends Migration
 
             $table->unique(['bookmark_id', 'tag_id']);
 
-            $table->foreign('bookmark_id')->references('id')->on('bookmark')->onUpdate('cascade');
-            $table->foreign('tag_id')->references('id')->on('tag')->onUpdate('cascade');
+            $table->foreign('bookmark_id')->references('id')->on('bookmark')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tag')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
