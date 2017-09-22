@@ -19,6 +19,7 @@ $router->group(['prefix' => 'bookmark'], function () use ($router) {
     $router->get('/', ['uses' => 'BookmarkController@index']);
     $router->post('/', ['uses' => 'BookmarkController@store']);
     $router->get('/{id}', ['uses' => 'BookmarkController@show']);
+    $router->get('/track/{id}', ['as' => 'track_url', 'uses' => 'BookmarkController@track']);
     $router->put('/{id}', ['uses' => 'BookmarkController@update']);
     $router->delete('/{id}', ['uses' => 'BookmarkController@destroy']);
 });

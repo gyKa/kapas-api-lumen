@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Laravel\Lumen\Http\Redirector;
 
 class BookmarkController extends Controller
 {
@@ -21,6 +22,8 @@ class BookmarkController extends Controller
                 ->select('tag.id', 'tag.title')
                 ->where('bookmark_tag.bookmark_id', $bookmark->id)
                 ->get();
+
+            $bookmark->url = route('track_url', ['id' => $bookmark->id]);
         }
 
         return response()->json($bookmarks);
@@ -74,6 +77,19 @@ class BookmarkController extends Controller
         $bookmark->tags = $tags;
 
         return response()->json($bookmark);
+    }
+
+    /**
+     * @param int $id
+     * @return Redirector
+     */
+    public function track(int $id)
+    {
+        $url = DB::table('bookmark')->where('id', $id)->value('url');
+
+        DB::table('visit')->insert(['bookmark_id' => $id]);
+
+        return redirect($url);
     }
 
     /**
