@@ -75,6 +75,7 @@ class BookmarkController extends Controller
                     ->get();
 
         $bookmark->tags = $tags;
+        $bookmark->url = route('track_url', ['id' => $bookmark->id]);
 
         return response()->json($bookmark);
     }
