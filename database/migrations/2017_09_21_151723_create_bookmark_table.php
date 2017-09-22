@@ -17,7 +17,8 @@ class CreateBookmarkTable extends Migration
             $table->increments('id');
             $table->string('title');
             $table->text('url');
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->nullable();
         });
     }
 

@@ -38,16 +38,14 @@ class BookmarkController extends Controller
             $tagId = DB::table('tag')->where('title', $tag)->value('id');
 
             if (is_null($tagId)) {
-                DB::table('tag')->insert(
-                    ['title' => $tag, 'created_at' => new \DateTime()]
-                );
+                DB::table('tag')->insert(['title' => $tag]);
             }
         }
 
         $tags = DB::table('tag')->whereIn('title', $data['tags'])->get();
 
         $id = DB::table('bookmark')->insertGetId(
-            ['title' => $data['title'], 'url' => $data['url'], 'created_at' => new \DateTime()]
+            ['title' => $data['title'], 'url' => $data['url']]
         );
 
         foreach ($tags as $tag) {
